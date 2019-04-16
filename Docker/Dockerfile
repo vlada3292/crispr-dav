@@ -15,18 +15,20 @@ RUN dnf install -y R
 RUN dnf install -y python-devel
 RUN dnf install -y cpanminus
 RUN dnf install -y dos2unix
+RUN dnf install -y nano
+RUN dnf install -y parallel
 
 #install perl modules
-RUN cpanm https://cpan.metacpan.org/authors/id/R/RS/RSAVAGE/Config-Tiny-2.23.tgz 
-RUN cpanm https://cpan.metacpan.org/authors/id/J/JM/JMCNAMARA/Excel-Writer-XLSX-0.95.tar.gz 
+RUN cpanm https://cpan.metacpan.org/authors/id/R/RS/RSAVAGE/Config-Tiny-2.23.tgz
+RUN cpanm https://cpan.metacpan.org/authors/id/J/JM/JMCNAMARA/Excel-Writer-XLSX-0.95.tar.gz
 RUN cpanm https://cpan.metacpan.org/authors/id/I/IS/ISHIGAKI/JSON-2.94.tar.gz
-RUN cpanm http://search.cpan.org/CPAN/authors/id/M/MI/MIKEB/Spreadsheet-XLSX-0.15.tar.gz 
+RUN cpanm http://search.cpan.org/CPAN/authors/id/M/MI/MIKEB/Spreadsheet-XLSX-0.15.tar.gz
 
 #install pysamstats
 RUN pip install pysam==0.8.4
 RUN pip install pysamstats==0.24.3
 
-# install ABRA 
+# install ABRA
 RUN wget https://github.com/mozack/abra/releases/download/v0.97/abra-0.97-SNAPSHOT-jar-with-dependencies.jar \
 	-O /usr/local/bin/abra-0.97-SNAPSHOT-jar-with-dependencies.jar
 
@@ -37,7 +39,7 @@ RUN wget https://sourceforge.net/projects/bio-bwa/files/bwa-0.7.15.tar.bz2/downl
 	&& make \
 	&& mv bwa /usr/local/bin \
 	&& cd .. \
-	&& rm -r bwa-0.7.15* 
+	&& rm -r bwa-0.7.15*
 
 # install samtools
 RUN wget https://sourceforge.net/projects/samtools/files/samtools/1.3.1/samtools-1.3.1.tar.bz2/download -O samtools-1.3.1.tar.bz2 \
@@ -85,3 +87,4 @@ RUN git clone https://github.com/pinetree1/crispr-dav.git \
 	&& cp /crispr-dav/Docker/conf.txt /crispr-dav/Examples/example2 \
 	&& cp /crispr-dav/Docker/conf.txt /crispr-dav/
 
+WORKDIR /crispr-dav
