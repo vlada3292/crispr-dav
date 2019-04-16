@@ -3,110 +3,78 @@
 ## Add a genome section to reflect the genome of interest. 
 ## If there are multiple genomes, each genome must have its own section.
 ## When amplicon sequence is used as reference, this section is ignored.
-
-## A genome musgt have ref_fasta and bwa_idx. 
-## The refGene entry is optional. It's used for visual alignment view of coding sequence.
-## Absolute path must be used for genome files when a samplesheet is used to prepare run.sh. 
+#
 
 [genomex]
-ref_fasta = /bfx/app/crispr-dav/Examples/example1/genome/genomex.fa
-bwa_idx   = /bfx/app/crispr-dav/Examples/example1/genome/genomex.fa
-refGene   = /bfx/app/crispr-dav/Examples/example1/genome/refgenex.txt
+ref_fasta = /genomes/genomex.fa
+bwa_idx   = /genomes/genomex.fa
+refGene   = /genomes/refgenex.txt
 
 [hg38]
-ref_fasta = /bfx/genome/hg38/hg38.fa
-bwa_idx   = /bfx/genome/hg38/hg38.fa
-refGene   = /bfx/genome/hg38/hg38_UCSCrefGene.txt
+ref_fasta = /genomes/hg38.fa
+bwa_idx   = /genomes/hg38.fa
+refGene   = /genomes/hg38_UCSCrefGene.txt
 
 [hg19]
-ref_fasta = /bfx/genome/hg19/hg19.fa
-bwa_idx   = /bfx/genome/hg19/hg19.fa
-refGene   = /bfx/genome/hg19/UCSCrefGene.txt
+ref_fasta = /genomes/hg19.fa
+bwa_idx   = /genomes/hg19.fa
+refGene   = /genomes/UCSCrefGene.txt
 
 [mm10]
-ref_fasta = /bfx/genome/mm10/mm10.fa
-bwa_idx   = /bfx/genome/mm10/mm10.fa
-refGene   = /bfx/genome/mm10/mm10_UCSCrefGene.txt
+ref_fasta = /genomes/mm10.fa
+bwa_idx   = /genomes/mm10.fa
+refGene   = /genomes/mm10_UCSCrefGene.txt
 
 [rn6]
-ref_fasta = /bfx/genome/rn6/rn6.fa
-bwa_idx   = /bfx/genome/rn6/rn6.fa
-refGene   = /bfx/genome/rn6/rn6_UCSCrefGene.txt
+ref_fasta = /genomes/rn6.fa
+bwa_idx   = /genomes/rn6.fa
+refGene   = /genomes/rn6_UCSCrefGene.txt
 
 [canFam3]
-ref_fasta = /bfx/genome/canFam3/canFam3.fa
-bwa_idx   = /bfx/genome/canFam3/canFam3.fa
-refGene   = /bfx/genome/canFam3/canFam3_UCSCrefGene.txt
+ref_fasta = /genomes/canFam3.fa
+bwa_idx   = /genomes/canFam3.fa
+refGene   = /genomes/canFam3_UCSCrefGene.txt
 
 
 [criGri1]
-ref_fasta = /bfx/genome/criGri1/criGri1.fa
-bwa_idx   = /bfx/genome/criGri1/criGri1.fa
-refGene   = /bfx/genome/criGri1/criGri1_UCSCrefGene.txt
+ref_fasta = /genomes/criGri1.fa
+bwa_idx   = /genomes/criGri1.fa
+refGene   = /genomes/criGri1_UCSCrefGene.txt
 
 ## Required tools 
 
 [app]
 
-# The paths of prinseq and abra must be provided. 
-# For others, if path is not provided, it must be accessible 
-# in your environment  
- 
-abra = /bfx/app/bin/abra-0.97-SNAPSHOT-jar-with-dependencies.jar 
+# The paths of abra jar file.
+abra = /usr/local/bin/abra-0.97-SNAPSHOT-jar-with-dependencies.jar
 
 # Path to prinseq-lite.pl. Make sure prinseq path is executable.
-prinseq = /bfx/app/bin/prinseq-lite.pl 
+prinseq = /usr/local/bin/prinseq-lite.pl 
 
-# bwa (e.g. 0.7.15) must support bwa mem -M, and be searchable in environment variable PATH
+# bwa must be added to PATH
 
-# samtools
-samtools = /bfx/app/bin/samtools 
-
-# Path of flash. By default use flash in PATH.
-flash = /bfx/app/bin/flash2
+# Path of samtools. By default use samtools in PATH.
+samtools = /usr/local/bin/samtools 
 
 # bedtools (e.g. v2.25) must support: bedtools intersect -F 
-bedtools = /bfx/app/bin/bedtools 
+# Default is bedtools in PATH.
+bedtools = /usr/local/bin/bedtools
 
-# java must be 1.7 or later
-java = /usr/bin/java 
+# Java must be 1.7 or later. Default is java in PATH
+java = /usr/bin/java
 
-# pysamstats
-pysamstats = /bfx/app/bin/pysamstats 
+# Path of pysamstats executable. By default use pysamstats in PATH.
+pysamstats = /usr/bin/pysamstats
+
+# Path of flash
+flash = /usr/local/bin/flash2
 
 # R must have ggplot2, reshape2, and naturalsort packages
-rscript = /bfx/app/bin/Rscript 
+#  By default use Rscript in PATH.
+rscript = /usr/bin/Rscript
 
 ## Filtering parameters
 
 [prinseq]
-# remove reads with quality score mean below this value (default: 30) 
-min_qual_mean = 30
 
-# remove reads with length less than this value (default: 50) 
-min_len	= 50
 
-# remove reads with percentage of Ns over this value (default: 3).
-ns_max_p = 3 
-
-[other]
-# realign for large indel detection with ABRA: Y(default) or N
-realign_flag = Y 
-
-# require minimum BWA mapping quality score (default: 20) 
-min_mapq = 20
-
-# number of bases on each side of sgRNA to view base changes (default: 40) 
-wing_length = 100 
-
-# Whether to use very high resolution in plots.
-# Default: 0. This creates PNG images of 72 ppi resolution. Good for web viewing.
-# If set to 1, TIFF images of 1200 ppi will be created and may be good for publication.
-# TIFF images may not be viewable in major web browsers, but can be opened
-# using common graphics software.
-high_res = 0
-
-# To control how many cores are needed to process one sample in SGE cluster
-# The list of parallel environments can be found by 'qconf -spl'
-parallel_env = orte
-cores_per_job = 12 
