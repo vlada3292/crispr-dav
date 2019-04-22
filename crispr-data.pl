@@ -16,8 +16,12 @@ use Data::Dumper;
 $| = 1;
 
 my %h = get_input();
-my $failed_href=process_samples();
-#crispr_data($failed_href);
+#my $failed_href=process_samples();
+my @failures;
+@failures = ();
+my %failed_samples = map{ $_ => 1 } @failures;
+my $failed_href = \%failed_samples;
+crispr_data($failed_href);
 
 sub process_samples {
 
@@ -61,11 +65,9 @@ sub process_samples {
     print STDERR "\n Running in PARALLEL!!! ...\n";
     #Util::run($cmd_parallel, "", $h{verbose}, 1,1);
     print $cmd_parallel;
-    if ( system($cmd_parallel) ) {
-        die "There was an error during execution."
-    }
+    system($cmd_parallel);
 
-    ## Wait for jobs to finish.  
+    ## Wait for jobs to finish.
     my $interval     = 120;                         # seconds
     my $max_days     = 1;
     my $max_time     = $max_days * 24 * 60 * 60;    # seconds
@@ -104,7 +106,7 @@ sub process_samples {
             print STDERR "\t" . join(": ", $s, $err) . "\n";
         }
         print STDERR "\n\tPlease check log files in $h{align_dir}.\n";
-        exit 1 if scalar(@failures)==$total_samples; 
+        exit 1 if scalar(@failures)==$total_samples;
     }
 
     my %failed_samples = map{ $_ => 1 } @failures;
@@ -113,7 +115,7 @@ sub process_samples {
 
 sub crispr_data {
     ## merge crispr-wide data
-    my $failed_samples = shift; # hash ref 
+    my $failed_samples = shift; # hash ref
     my $dir       = $h{align_dir};
     my $hasHeader = 1;
     my @crisprs   = sort keys %{ $h{crispr_samples} };
@@ -129,7 +131,7 @@ sub crispr_data {
         my $hdr_bases = $tmp[5];
 
         # combine results of all successful samples
-        my @samp;  
+        my @samp;
         foreach my $s ( sort keys %{ $h{crispr_samples}->{$crispr} } ) {
             push (@samp, $s) if !$failed_samples->{$s};
         }
@@ -154,15 +156,15 @@ sub crispr_data {
                 Util::tab2xlsx( $outfile, "$dest/${crispr}_$ext.xlsx" );
             }
         }
-       
-        # plot reads vs stages 
+
+        # plot reads vs stages
         my $infile = "$h{align_dir}/$crispr" . "_cnt.txt";
         my $cmd = "$h{rscript} $Bin/Rscripts/read_stats.R --inf=$infile" .
-            " --outf=$dest/$crispr.readcnt.$plot_ext --rmd=$h{remove_duplicate}"; 
+            " --outf=$dest/$crispr.readcnt.$plot_ext --rmd=$h{remove_duplicate}";
         $cmd .= " --high_res=$h{high_res}" if $h{high_res};
         Util::run($cmd, "Failed to create plot of read stats", $h{verbose});
-        
-        # plot reads vs chromosomes 
+
+        # plot reads vs chromosomes
         $infile="$h{align_dir}/$crispr" . "_chr.txt";
         $cmd = "$h{rscript} $Bin/Rscripts/read_chr.R --inf=$infile" .
                " --outf=$dest/$crispr.readchr.$plot_ext";
@@ -178,12 +180,12 @@ sub crispr_data {
                " --pctf=$dest/$crispr.indelpct.$plot_ext";
         $cmd .= " --high_res=$h{high_res}" if $h{high_res};
         Util::run( $cmd, "Failed to plot indel count/pct", $h{verbose});
-            
-        # plot HDR 
+
+        # plot HDR
         if ( $hdr_bases ) {
             $infile="$h{align_dir}/$crispr" . "_hdr.txt";
             #$cmd = "$h{rscript} $Bin/Rscripts/hdr.R --inf=$infile --sub=$crispr" .
-            $cmd = "$h{rscript} $Bin/Rscripts/hdr.R --inf=$infile" . 
+            $cmd = "$h{rscript} $Bin/Rscripts/hdr.R --inf=$infile" .
                    " --outf=$dest/$crispr.hdr.$plot_ext";
             $cmd .= " --high_res=$h{high_res}" if $h{high_res};
             Util::run( $cmd, "Failed to create HDR plot", $h{verbose});
@@ -199,7 +201,7 @@ sub crispr_data {
                     $h{verbose});
             }
         } else {
-           $h{canvasXpress} = 0; 
+           $h{canvasXpress} = 0;
         }
 
         ## move the image files for individual sample to dest
@@ -220,7 +222,7 @@ sub crispr_data {
         $cmd .= " --high_res" if $h{high_res};
         $cmd .= " --realign" if $h{realign_flag} eq "Y";
         $cmd .= " $h{align_dir} $h{deliv_dir}";
-        Util::run( $cmd, "Failed to create results html page", 
+        Util::run( $cmd, "Failed to create results html page",
               $h{verbose});
         print STDERR "Generated HTML report for $crispr.\n";
     } # for each crispr
@@ -240,9 +242,9 @@ sub prepare_command {
     }
 
     $cmd .= " --abra $h{abra} --prinseq $h{prinseq}" .
-       " --samtools $h{samtools}" . 
-       " --java $h{java} --bedtools $h{bedtools}" . 
-       " --pysamstats $h{pysamstats} --rscript $h{rscript}" . 
+       " --samtools $h{samtools}" .
+       " --java $h{java} --bedtools $h{bedtools}" .
+       " --pysamstats $h{pysamstats} --rscript $h{rscript}" .
        " --tmpdir $h{tmpdir} --min_qual_mean $h{min_qual_mean}" .
        " --min_len $h{min_len} --ns_max_p $h{ns_max_p}";
 
@@ -269,55 +271,55 @@ sub get_input {
     my $CONF_TEMPLATE = "$Bin/conf.txt";
     my $usage         = "CRISPR data analysis and visualization pipeline.
 
-Usage: $0 [options] 
+Usage: $0 [options]
 
     --conf <str> Configuration file. Required. See template $CONF_TEMPLATE
-        It has information about genome locations, tools, and parameters.  
+        It has information about genome locations, tools, and parameters.
 
-    Specify a reference using --genome or --amp_fasta, but not both. 
-    Use --genome for standard genome, such as hg19. Need to have paths of fasta file, 
-    bwa index, and refGene coordinate file in the configuration file. To download the  
-    coordinate file, go to UCSC Genome Browser, in TableBrowser, select group:Genes 
+    Specify a reference using --genome or --amp_fasta, but not both.
+    Use --genome for standard genome, such as hg19. Need to have paths of fasta file,
+    bwa index, and refGene coordinate file in the configuration file. To download the
+    coordinate file, go to UCSC Genome Browser, in TableBrowser, select group:Genes
     and Gene Predictions, track:RefSeq Genes, table:refGene, region:genome,
-    output format:all fields from selected table. The downloaded tab-delimited file 
+    output format:all fields from selected table. The downloaded tab-delimited file
     should have these columns:
-    bin,name,chrom,strand,txStart,txEnd,cdsStart,cdsEnd,exonStarts,exonEnds,... 
-    Use --amp_fasta when using a custom amplicon sequenece as reference. 
+    bin,name,chrom,strand,txStart,txEnd,cdsStart,cdsEnd,exonStarts,exonEnds,...
+    Use --amp_fasta when using a custom amplicon sequenece as reference.
 
     --genome <str> Genome version (e.g. hg19) as specified in configuration file.
 
-    --amp_fasta <str> Amplicon reference fasta file containing a single sequence. 
-    --codon_start <int> Translation starting position in the amplicon reference sequence. 
-        If the first codon starts at the first base, then the position is 1. No translation 
-        will be performed if the option is omitted. No intron should be present in the 
-        amplicon reference sequence if translation is needed. 
+    --amp_fasta <str> Amplicon reference fasta file containing a single sequence.
+    --codon_start <int> Translation starting position in the amplicon reference sequence.
+        If the first codon starts at the first base, then the position is 1. No translation
+        will be performed if the option is omitted. No intron should be present in the
+        amplicon reference sequence if translation is needed.
 
     --region <str> Required when --genome option is used. This is a bed file for amplicon region.
-        The tab-separated fields are chr, start, end, genesym, refseqid, strand(+/-). 
+        The tab-separated fields are chr, start, end, genesym, refseqid, strand(+/-).
         No header. All fields are required.
         The start and end are 0-based; start is inclusive and end is exclusive.
-        Genesym is gene symbol. Refseqid is used to identify transcript coordinates in 
-        UCSC refGene coordinate file. If refseqid is '-', no alignment view will be created. 
-        Only one row is allowed this file. If an experiment has two amplicons, run the 
-        pipeline separately for each amplicon. 
+        Genesym is gene symbol. Refseqid is used to identify transcript coordinates in
+        UCSC refGene coordinate file. If refseqid is '-', no alignment view will be created.
+        Only one row is allowed this file. If an experiment has two amplicons, run the
+        pipeline separately for each amplicon.
 
     --crispr <str> Required. A bed file containing one or more CRISPR sgRNA sites.
         Tab-delimited file. No header. Information for each site:
-        The fields are: chr, start, end, CRISPR_name, sgRNA_sequence, strand, and 
-        HDR mutations.  All fields except HDR mutations are required. The start and end 
-        are 0-based; start is inclusive and end is exclusive. CRISPR names and sequences 
-        must be unique. 
-        HDR format: <Pos1><NewBase1>,<Pos2><NewBase2>,... The bases are desired new bases 
-        on positive strand,e.g.101900208C,101900229G,101900232C,101900235A. No space. The 
-        positions are 1-based and inclusive. 
+        The fields are: chr, start, end, CRISPR_name, sgRNA_sequence, strand, and
+        HDR mutations.  All fields except HDR mutations are required. The start and end
+        are 0-based; start is inclusive and end is exclusive. CRISPR names and sequences
+        must be unique.
+        HDR format: <Pos1><NewBase1>,<Pos2><NewBase2>,... The bases are desired new bases
+        on positive strand,e.g.101900208C,101900229G,101900232C,101900235A. No space. The
+        positions are 1-based and inclusive.
 
     --fastqmap <str> Required. A tab-delimited file containing 2 or 3 columns. No header.
         The fields are sample name, read1 fastq file, and optionally read2 fastq file.
         Fastq files must be gizpped and and file names end with .gz.
 
-    --sitemap <str> Required. A tab-delimited file that associates sample name with CRISPR 
+    --sitemap <str> Required. A tab-delimited file that associates sample name with CRISPR
         sites. No header. Each line starts with sample name, followed by one or more sgRNA
-        guide sequences. This file controls what samples to be analyzed. 
+        guide sequences. This file controls what samples to be analyzed.
 
     --merge Y or N. Default: Y. Merge paired-end reads before filtering and alignment.
     --sge Submit jobs to SGE queue. The system must already have been configured for SGE.
@@ -332,7 +334,7 @@ Usage: $0 [options]
     GetOptions(
         \%h,           'conf=s',     'genome=s',  'amp_fasta=s',
         'codon_start=i', 'outdir=s',   'help',      'region=s',
-        'crispr=s',    'fastqmap=s', 'sitemap=s', 'merge=s', 
+        'crispr=s',    'fastqmap=s', 'sitemap=s', 'merge=s',
         'sge', 'verbose'
     ) or exit;
 
@@ -345,13 +347,13 @@ Usage: $0 [options]
     }
 
     if ( !-f $h{conf} ) {
-        die "\nError: Could not find $h{conf}.\n"; 
+        die "\nError: Could not find $h{conf}.\n";
     }
 
     if ( ( !$h{genome} && !$h{amp_fasta} ) or ( $h{genome} && $h{amp_fasta} ) )
     {
         die "Must specify either --genome or --amp_fasta\n";
-    } 
+    }
 
     $h{pid} = $$;
 
@@ -374,10 +376,10 @@ Usage: $0 [options]
     for my $s ( "app", "other" ) {
         die "\nError: section [$s] is missing in $h{conf}.\n" if !$cfg->{$s};
     }
-    
+
     # app section
     foreach my $tool (
-        "abra", "prinseq", "flash", "samtools", 
+        "abra", "prinseq", "flash", "samtools",
         "java", "bedtools", "pysamstats", "rscript"
       )
     {
@@ -392,12 +394,12 @@ Usage: $0 [options]
                     $cfg->{app}{$tool} = $tool;
                 }
 
-                $cfg->{app}{$tool}=qx(which $cfg->{app}{$tool}) or 
-                    die "$tool must either be specified under [app]" .  
-                        " in $h{conf} or accessible in your PATH\n"; 
-                chomp($cfg->{app}{$tool}); 
+                $cfg->{app}{$tool}=qx(which $cfg->{app}{$tool}) or
+                    die "$tool must either be specified under [app]" .
+                        " in $h{conf} or accessible in your PATH\n";
+                chomp($cfg->{app}{$tool});
             }
-        } 
+        }
 
         if ( $cfg->{app}{$tool} =~ /\// && !-f $cfg->{app}{$tool} ) {
             die "Could not find $cfg->{app}{$tool}!\n";
@@ -406,13 +408,13 @@ Usage: $0 [options]
         $h{$tool} = $cfg->{app}{$tool};
         if ( $tool ne "abra" ) {
             if ( $h{$tool} =~ /\// && ! -x $h{$tool} ) {
-                die "\nError: $h{$tool} is not executable. Run: chmod +x $h{$tool}\n"; 
+                die "\nError: $h{$tool} is not executable. Run: chmod +x $h{$tool}\n";
             }
         }
     }
-    
+
     # Ensure bwa is in PATH
-    my $bwa= qx(which bwa 2>/dev/null) or 
+    my $bwa= qx(which bwa 2>/dev/null) or
         die "\nError: bwa not found. It must be searchable in your environment PATH specified locations.\n";
     chomp $bwa;
     $h{bwa} = $bwa;
@@ -452,7 +454,7 @@ Usage: $0 [options]
         $h{refGene}   = $cfg->{ $h{genome} }{refGene};
 
         foreach my $name ( "ref_fasta", "bwa_idx" ) {
-            if ( !$h{$name} ) { 
+            if ( !$h{$name} ) {
                 die "Could not find $name under [$h{genome}] in $h{conf}\n";
             }
         }
@@ -462,12 +464,12 @@ Usage: $0 [options]
         }
 
         if ( !-f "$h{bwa_idx}.bwt" ) {
-            die "Could not find bwa index files, e.g. $h{bwa_idx}.bwt\n"; 
+            die "Could not find bwa index files, e.g. $h{bwa_idx}.bwt\n";
         }
 
         if ( $h{refGene} && !-f $h{refGene} ) {
-            die "Could not find refGene file $h{refGene}!\n" . 
-                "  refGene is optional under [$h{genome}] in $h{conf}.\n" . 
+            die "Could not find refGene file $h{refGene}!\n" .
+                "  refGene is optional under [$h{genome}] in $h{conf}.\n" .
                 "  It's needed for creating alignment view.\n";
         }
     }
@@ -475,7 +477,7 @@ Usage: $0 [options]
         if ( defined $h{codon_start} ) {
             if ( $h{codon_start} < 1 ) {
                die "codon_start is $h{codon_start}, but it must be at least 1.\n";
-           	} 
+           	}
         }
 
         $h{ref_fasta} = "$h{align_dir}/" . basename($h{amp_fasta});
@@ -506,18 +508,18 @@ Usage: $0 [options]
                 "txStart",   "txEnd",      "cdsStart", "cdsEnd",
                 "exonCount", "exonStarts", "exonEnds" ) . "\n";
             print $tmpf join( "\t",
-                "0", $seqid, $seqid, "+", 
-                $h{codon_start} - 1, $len, $h{codon_start} - 1, $len, 
+                "0", $seqid, $seqid, "+",
+                $h{codon_start} - 1, $len, $h{codon_start} - 1, $len,
                 1, $h{codon_start} - 1, $len ) . "\n";
             close $tmpf;
         }
     }
 
-    ## Make sure ref_fasta's directory is writable for pysamstats 
+    ## Make sure ref_fasta's directory is writable for pysamstats
     ## or samtools faidx to create FASTA index if not present.
     if ( ! -w dirname($h{ref_fasta}) ) {
         die "\nError: $h{ref_fasta}\'s directory is not writable.\n";
-    } 
+    }
 
     ## prinseq
     foreach my $p ( "min_qual_mean", "min_len", "ns_max_p" ) {
@@ -541,9 +543,9 @@ Usage: $0 [options]
     # Defaults:
     $h{remove_duplicate} ||= "N";
     $h{realign_flag}     ||= "Y";
-    check_yn($h{remove_duplicate}, 
+    check_yn($h{remove_duplicate},
       "remove_duplicate value ($h{remove_duplicate}) must be Y or N(default)");
-    check_yn($h{realign_flag}, 
+    check_yn($h{realign_flag},
       "realign_flag ($h{realign_flag}) must be Y(default) or N");
     $h{min_mapq}         //= 20;
     $h{wing_length}      //= 40;
@@ -557,7 +559,7 @@ Usage: $0 [options]
 
     ## amplicon and crisprs
     my ( $amp, $crisprs, $sample_crisprs, $crispr_samples ) =
-      process_beds( $h{region}, $h{crispr}, $h{sitemap}, 
+      process_beds( $h{region}, $h{crispr}, $h{sitemap},
 		$h{ref_fasta}, $h{tmpdir}, $h{bedtools}, $h{wing_length} );
 
     $h{chr}            = $amp->[0];
@@ -572,8 +574,8 @@ Usage: $0 [options]
     $h{crispr_samples} = $crispr_samples;
 
     # whether to create canvasXpress view on cDNA
-    if ( $h{refseqid} 
-        && $h{refseqid} ne "-" 
+    if ( $h{refseqid}
+        && $h{refseqid} ne "-"
         && -f $h{refGene}
         && Util::refGeneCoord($h{refGene}, $h{refseqid})
     ) {
@@ -610,7 +612,7 @@ sub check_yn {
 }
 
 sub process_beds {
-    my ( $amp_bed, $crispr_bed, $sitemap, $ref_fasta, 
+    my ( $amp_bed, $crispr_bed, $sitemap, $ref_fasta,
 		$tmpdir, $bedtools, $wing_length ) = @_;
     die "Could not find $amp_bed!\n"    if !-f $amp_bed;
     die "Could not find $crispr_bed!\n" if !-f $crispr_bed;
@@ -649,7 +651,7 @@ sub process_beds {
 
     my $MIN_AMP_SIZE = 50;
     if ( $amp[2] - $amp[1] < $MIN_AMP_SIZE ) {
-        die "Error: Amplicon size too small!" . 
+        die "Error: Amplicon size too small!" .
             " Must be at least $MIN_AMP_SIZE bp.\n";
     }
 
@@ -660,15 +662,15 @@ sub process_beds {
 
     open( my $cb, $crispr_bed ) or die "Could not find $crispr_bed.\n";
     my %crispr_names;    # {seq}=>name. Ensure unique CRISPR sequences
-    my %seen_names; # to ensure unique CRISPR names 
-	my %hdr_refbases; 
+    my %seen_names; # to ensure unique CRISPR names
+	my %hdr_refbases;
     while ( my $line = <$cb> ) {
         next if ( $line !~ /\w/ || $line =~ /^#/ );
         $line =~ s/ //g;
         chomp $line;
         my @a = split(/\t/, $line);
-        die "\nError: In $crispr_bed, This entry does not have at least " .  
-           "6 tab-separated columns:\n$line\n" if scalar(@a) < 6;  
+        die "\nError: In $crispr_bed, This entry does not have at least " .
+           "6 tab-separated columns:\n$line\n" if scalar(@a) < 6;
 
         my ($chr, $start, $end, $name, $seq, $strand, $hdr) = @a;
         die "Strand must be + or - in bed file!\n" if $strand !~ /[+-]/;
@@ -678,7 +680,7 @@ sub process_beds {
         check_bed_coord( $start, $end, "\nError in $crispr_bed" );
 
         if ( $chr ne $amp[0] ) {
-            die "\nError: CRISPR $name\'s chromosome $chr does not" . 
+            die "\nError: CRISPR $name\'s chromosome $chr does not" .
                 " match $amp[0] in amplicon bed.\n";
         }
 
@@ -701,7 +703,7 @@ sub process_beds {
         $seen_names{$name} = 1;
 
 		# make sure all bases in hdr are mutant bases.
-		if ( $hdr && ! defined $hdr_refbases{$hdr} ) { 
+		if ( $hdr && ! defined $hdr_refbases{$hdr} ) {
 			$hdr_refbases{$hdr} = check_hdr($hdr, $chr, $start+1-$wing_length,
 				$end+$wing_length, $ref_fasta, $tmpdir, $bedtools);
 		}
@@ -730,7 +732,7 @@ sub process_beds {
         chomp $line;
         my @a = split( /\t/, $line );
         if (@a < 2) {
-            die "In $sitemap, each line must have at least 2 tab-separated\n" . 
+            die "In $sitemap, each line must have at least 2 tab-separated\n" .
                 " columns:\nError line: $line\n";
         }
 
@@ -775,9 +777,9 @@ sub get_fastq_files {
         chomp $line;
         my @a = split( /\t/, $line );
         if ( scalar(@a) < 2 or scalar(@a) > 3 ) {
-            die "In $filemap, a sample can have only 1 or 2 fastq" . 
-               " files separated by tab.\n" . 
-               "Error line: $line\n"; 
+            die "In $filemap, a sample can have only 1 or 2 fastq" .
+               " files separated by tab.\n" .
+               "Error line: $line\n";
         }
 
         my $sample = shift @a;
@@ -789,7 +791,7 @@ sub get_fastq_files {
         # ensure fastq files exist
         foreach my $f (@a) {
             next if !$f;
-            push ( @{$errors{$f}}, "File not found") if !-f $f; 
+            push ( @{$errors{$f}}, "File not found") if !-f $f;
             push ( @{$errors{$f}}, "File not .gz") if $f !~ /\.gz$/ ;
             push ( @{$errors{$f}}, "File duplicated") if $seen{$f};
             push( @b, $f ) if !$errors{$f};
@@ -806,7 +808,7 @@ sub get_fastq_files {
         print STDERR "Fastq file errors:\n";
         foreach my $f ( sort keys %errors ) {
             print STDERR "$f: " . join("; ", @{$errors{$f}}) . "\n";
-        } 
+        }
         exit 1;
     }
 
@@ -860,11 +862,11 @@ sub check_rpkg {
     my ($rscript_path, $tmpdir)=@_;
     my $script = "$tmpdir/.check.R";
     open(my $tmpf, ">$script") or die "could not create $script\n";
-    print $tmpf "library(ggplot2)\nlibrary(naturalsort)\n" . 
+    print $tmpf "library(ggplot2)\nlibrary(naturalsort)\n" .
         "library(reshape2)\n";
     close $tmpf;
     if ( system("$rscript_path $script") ) {
-        die "\nError: Missing required R package.\n"; 
+        die "\nError: Missing required R package.\n";
     }
     unlink $script;
 }
@@ -897,7 +899,7 @@ sub stop_processing {
     }
 }
 
-# Ensure custom seq in fasta format with one sequence only, and without 
+# Ensure custom seq in fasta format with one sequence only, and without
 # non-ACGT alphabet. Return seqid and sequence length.
 sub process_custom_seq {
     my ($seq_infile, $outfile) = @_;
@@ -917,44 +919,44 @@ sub process_custom_seq {
         } else {
             $line =~ s/[^A-Za-z]//g;
             if ( uc($line) =~ /[^ACGT]/ ) {
-                 die "\nError: $seq_infile contained non-ACGT alphabet.\n" 
+                 die "\nError: $seq_infile contained non-ACGT alphabet.\n"
             }
             $seq .= uc($line);
         }
     }
     close $inf;
-    
+
     die "No sequence in $seq_infile!\n" if !$seq;
 
     print $outf ">$seqid\n$seq\n";
     return ($seqid, length($seq));
 }
 
-# Ensure all bases in HDR field is mutant compared to reference sequence  
+# Ensure all bases in HDR field is mutant compared to reference sequence
 sub check_hdr {
-	my ($base_changes, $chr, $min_pos, $max_pos, 
+	my ($base_changes, $chr, $min_pos, $max_pos,
 		$ref_fasta, $tmpdir, $bedtools)=@_;
 
 	my $err="\nError: HDR base position out of range $min_pos - $max_pos. ";
 	$err .= "The range is determined as sgRNA start + 1 - wing_length to ";
 	$err .= "sgRNA end + wing_length. Please verify the HDR base positions ";
-	$err .= "or set wing_length accordingly.\n"; 
+	$err .= "or set wing_length accordingly.\n";
 	my %alt;    # pos=>base
 	foreach my $mut ( split /,/, $base_changes ) {
 		my ( $pos, $base ) = ( $mut =~ /(\d+)(\D+)/ );
-		die $err if ($pos < $min_pos or $pos > $max_pos);   
+		die $err if ($pos < $min_pos or $pos > $max_pos);
 		$alt{$pos} = uc($base);
 	}
 
 	# create bed file spanning the HDR SNPs. Position format: [Start, end).
-	my $bedfile   = "$tmpdir/tmp-hdr.bed";	
+	my $bedfile   = "$tmpdir/tmp-hdr.bed";
 	my @pos       = sort { $a <=> $b } keys %alt;
 	my $hdr_start = $pos[0];
 	my $hdr_end   = $pos[-1];
 	open(my $tmpf, ">$bedfile") or die "Cannot create $bedfile.\n";
 	print $tmpf join("\t", $chr, $hdr_start-1, $hdr_end) . "\n";
 	close $tmpf;
-	
+
 	# extract reference sequence in hdr region
 	my $hdr_ref = "$tmpdir/tmp-hdr.ref";
 	my $cmd = "$bedtools getfasta -fi $ref_fasta -bed $bedfile -fo $hdr_ref -tab";
@@ -968,12 +970,12 @@ sub check_hdr {
 	my @ref_bases;
 	foreach my $pos ( keys %alt ) {
 		if ( $alt{$pos} eq substr($seq, $pos-$hdr_start, 1) ) {
-			push(@ref_bases, $pos . $alt{$pos}); 	
-		}	
-	}			
+			push(@ref_bases, $pos . $alt{$pos});
+		}
+	}
 
 	if ( @ref_bases ) {
-		return join(",", @ref_bases); 
+		return join(",", @ref_bases);
 	}
 }
 
