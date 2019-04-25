@@ -17,6 +17,8 @@ RUN dnf install -y cpanminus
 RUN dnf install -y dos2unix
 RUN dnf install -y nano
 RUN dnf install -y parallel
+RUN dnf install -y rsync
+
 
 #install perl modules
 RUN cpanm https://cpan.metacpan.org/authors/id/R/RS/RSAVAGE/Config-Tiny-2.23.tgz
@@ -82,7 +84,7 @@ RUN Rscript -e "install.packages('ggplot2')"
 RUN Rscript -e "install.packages('naturalsort')"
 
 # clone crispr-dav pipeline
-RUN git clone https://github.com/pinetree1/crispr-dav.git \
+RUN git clone -b develop https://github.com/vladimir-obucina/crispr-dav.git \
 	&& cp /crispr-dav/Docker/conf.txt /crispr-dav/Examples/example1 \
 	&& cp /crispr-dav/Docker/conf.txt /crispr-dav/Examples/example2 \
 	&& cp /crispr-dav/Docker/conf.txt /crispr-dav/
