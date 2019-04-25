@@ -4,10 +4,42 @@
 ## If there are multiple genomes, each genome must have its own section.
 ## When amplicon sequence is used as reference, this section is ignored.
 #
+
 [genomex]
-ref_fasta = /crispr-dav/Examples/example1/genome/genomex.fa
-bwa_idx = /crispr-dav/Examples/example1/genome/genomex.fa
-refGene = /crispr-dav/Examples/example1/genome/refgenex.txt
+ref_fasta = /genomes/genomex.fa
+bwa_idx   = /genomes/genomex.fa
+refGene   = /genomes/refgenex.txt
+
+[hg38]
+ref_fasta = /genomes/hg38.fa
+bwa_idx   = /genomes/hg38.fa
+refGene   = /genomes/hg38_UCSCrefGene.txt
+
+[hg19]
+ref_fasta = /genomes/hg19.fa
+bwa_idx   = /genomes/hg19.fa
+refGene   = /genomes/UCSCrefGene.txt
+
+[mm10]
+ref_fasta = /genomes/mm10.fa
+bwa_idx   = /genomes/mm10.fa
+refGene   = /genomes/mm10_UCSCrefGene.txt
+
+[rn6]
+ref_fasta = /genomes/rn6.fa
+bwa_idx   = /genomes/rn6.fa
+refGene   = /genomes/rn6_UCSCrefGene.txt
+
+[canFam3]
+ref_fasta = /genomes/canFam3.fa
+bwa_idx   = /genomes/canFam3.fa
+refGene   = /genomes/canFam3_UCSCrefGene.txt
+
+
+[criGri1]
+ref_fasta = /genomes/criGri1.fa
+bwa_idx   = /genomes/criGri1.fa
+refGene   = /genomes/criGri1_UCSCrefGene.txt
 
 ## Required tools 
 
@@ -44,21 +76,5 @@ rscript = /usr/bin/Rscript
 ## Filtering parameters
 
 [prinseq]
-# remove reads with quality score mean below this value (default: 30) 
-min_qual_mean = 30
 
-# remove reads with length less than this value (default: 50) 
-min_len	= 50
 
-# remove reads with percentage of Ns over this value (default: 3).
-ns_max_p = 3 
-
-[other]
-# realign for large indel detection with ABRA: Y(default) or N
-realign_flag = Y 
-
-# require minimum BWA mapping quality score (default: 20) 
-min_mapq = 20
-
-# number of bases on each side of sgRNA to view base changes (default: 40) 
-wing_length = 100 
