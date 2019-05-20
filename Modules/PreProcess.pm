@@ -568,7 +568,7 @@ sub parseSamplesheet {
 
     if ( @errors ) {
         print join("\n", "Errors:", @errors) . "\n";
-        exit;
+        exit 1;
     }
 
     return (\@ordered_amps, \%samples, \%fastqDirs, \%projects, 
